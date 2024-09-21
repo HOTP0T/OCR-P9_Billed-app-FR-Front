@@ -1,3 +1,5 @@
+console.log("Hello World!");
+
 import { formatDate } from '../app/format.js'
 import DashboardFormUI from '../views/DashboardFormUI.js'
 import BigBilledIcon from '../assets/svg/big_billed.js'
@@ -145,9 +147,19 @@ export default class {
       this.counter ++
     }
 
-    bills.forEach(bill => {
-      $(`#open-bill${bill.id}`).click((e) => this.handleEditTicket(e, bill, bills))
-    })
+    // bills.forEach(bill => {
+    //   $(`#open-bill${bill.id}`).click((e) => this.handleEditTicket(e, bill, bills))
+    // })
+
+    bills.forEach((bill) => {
+      // On retire tous les écouteurs d'évènements sur le clic de la souris sur chaque icone flèche
+      $(`#open-bill${bill.id}`).off("click");
+
+      // On ajoute un unique écouteur d'évènement sur le clic de la souris sur chaque icone flèche pour afficher ou cacher la liste des factures (bills) en fonction de l'index de l'icone flèche cliquée
+      $(`#open-bill${bill.id}`).on("click", (e) =>
+        this.handleEditTicket(e, bill, bills)
+      );
+    });
 
     return bills
 

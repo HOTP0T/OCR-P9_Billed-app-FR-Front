@@ -25,6 +25,15 @@ const rows = (data) => {
 
 export default ({ data: bills, loading, error }) => {
   
+  // sort bills by date to fix error 1 from notion kanban
+  const orderDate = (recettes) => {
+    const comparator = (a, b) => {
+      const date1 = new Date(a.date);
+      const date2 = new Date(b.date);
+      return date1 < date2 ? 1 : -1;
+    }
+    return (recettes && recettes.length) ? recettes.sort(comparator) : []
+  }
   const modal = () => (`
     <div class="modal fade" id="modaleFile" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -69,7 +78,7 @@ export default ({ data: bills, loading, error }) => {
               </tr>
           </thead>
           <tbody data-testid="tbody">
-            ${rows(bills)}
+            ${rows(orderDate(bills))}
           </tbody>
           </table>
         </div>
