@@ -57,4 +57,30 @@ describe("Given I am connected as an employee", () => {
       })
     })
   })
+
+  //added getBills test for 80% + coverage
+  describe("When getBills is called and there is corrupted data", () => {
+    test("Then it should log an error and return the unformatted date", async () => {
+      const corruptedBill = [{
+        date: "corrupted-date",
+        status: "pending"
+      }];
+  
+      const storeMock = {
+        bills: () => ({
+          list: jest.fn().mockResolvedValueOnce(corruptedBill)
+        })
+      };
+  
+      const billsController = new Bills({
+        document, onNavigate: jest.fn(), store: storeMock, localStorage: window.localStorage
+      });
+  
+      const consoleSpy = jest.spyOn(console, 'log');
+      const bills = await billsController.getBills();
+  
+      expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error), 'for', corruptedBill[0]);
+      expect(bills[0].date).toBe("corrupted-date");
+    });
+  });
 })
