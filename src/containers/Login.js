@@ -46,6 +46,7 @@ export default class Login {
       });
   };
 
+  // CHANGED FROM EMPLOYEE TO ADMIN TO FIX ERROR
   handleSubmitAdmin = (e) => {
     e.preventDefault();
     const user = {
