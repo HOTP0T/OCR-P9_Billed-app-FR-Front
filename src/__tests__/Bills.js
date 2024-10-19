@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import {screen, waitFor} from "@testing-library/dom"
 import BillsUI from "../views/BillsUI.js"
 import { bills } from "../fixtures/bills.js"
@@ -9,16 +5,13 @@ import { ROUTES_PATH} from "../constants/routes.js";
 import { localStorageMock } from "../__mocks__/localStorage.js";
 import Bills from "../containers/Bills.js";
 import userEvent from '@testing-library/user-event'
-
 import router from "../app/Router.js";
 
 $.fn.modal = jest.fn(); 
 
-
 describe("Given I am connected as an employee", () => {
   describe("When I am on Bills Page", () => {
     test("Then bill icon in vertical layout should be highlighted", async () => {
-
       Object.defineProperty(window, 'localStorage', { value: localStorageMock })
       window.localStorage.setItem('user', JSON.stringify({
         type: 'Employee'
@@ -30,10 +23,9 @@ describe("Given I am connected as an employee", () => {
       window.onNavigate(ROUTES_PATH.Bills)
       await waitFor(() => screen.getByTestId('icon-window'))
       const windowIcon = screen.getByTestId('icon-window')
-      //to-do write expect expression active-icon
       expect(windowIcon.classList).toContain('active-icon')
-      
     })
+
     test("Then bills should be ordered from earliest to latest", () => {
       document.body.innerHTML = BillsUI({ data: bills })
       const dates = screen.getAllByText(/^(19|20)\d\d[- /.](0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])$/i).map(a => a.innerHTML)
@@ -41,15 +33,44 @@ describe("Given I am connected as an employee", () => {
       const datesSorted = [...dates].sort(antiChrono)
       expect(dates).toEqual(datesSorted)
     })
+
+    describe("When an error occurs on API", () => {
+      test("Then it should display a 404 error message", async () => {
+        const storeMock = {
+          bills: () => ({
+            list: jest.fn().mockRejectedValueOnce(new Error("Error 404"))
+          })
+        };
+    
+        // No need to create billsController here
+        document.body.innerHTML = BillsUI({ error: "Error 404" });
+    
+        const errorMessage = screen.getByTestId("error-message");
+        expect(errorMessage.textContent).toMatch(/404/);
+      });
+    
+      test("Then it should display a 500 error message", async () => {
+        const storeMock = {
+          bills: () => ({
+            list: jest.fn().mockRejectedValueOnce(new Error("Error 500"))
+          })
+        };
+    
+        // No need to create billsController here
+        document.body.innerHTML = BillsUI({ error: "Error 500" });
+    
+        const errorMessage = screen.getByTestId("error-message");
+        expect(errorMessage.textContent).toMatch(/500/);
+      });
+    });
+
     describe("When I click on eye button", () => {
       test("The handleClickIconEye are called", async () => {
         const billsController = new Bills({
           document, onNavigate, store: null, bills: bills, localStorage: window.localStorage
         })
         document.body.innerHTML = BillsUI({ data: bills })
-        //on recupere le premier icon-eye avec[0]
         const iconEye = document.querySelectorAll(`div[data-testid="icon-eye"]`)[0] 
-        // on simule le click avec jest.fn()
         const handleClickIconEyeMock = jest.fn(() => billsController.handleClickIconEye(iconEye))
         iconEye.addEventListener('click', handleClickIconEyeMock)
         userEvent.click(iconEye)
@@ -58,7 +79,6 @@ describe("Given I am connected as an employee", () => {
     })
   })
 
-  //added getBills test for 80% + coverage
   describe("When getBills is called and there is corrupted data", () => {
     test("Then it should log an error and return the unformatted date", async () => {
       const corruptedBill = [{
