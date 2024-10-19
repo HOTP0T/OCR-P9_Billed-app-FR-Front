@@ -36,13 +36,7 @@ describe("Given I am connected as an employee", () => {
 
     describe("When an error occurs on API", () => {
       test("Then it should display a 404 error message", async () => {
-        const storeMock = {
-          bills: () => ({
-            list: jest.fn().mockRejectedValueOnce(new Error("Error 404"))
-          })
-        };
-    
-        // No need to create billsController here
+        // Directly render the error message
         document.body.innerHTML = BillsUI({ error: "Error 404" });
     
         const errorMessage = screen.getByTestId("error-message");
@@ -50,13 +44,7 @@ describe("Given I am connected as an employee", () => {
       });
     
       test("Then it should display a 500 error message", async () => {
-        const storeMock = {
-          bills: () => ({
-            list: jest.fn().mockRejectedValueOnce(new Error("Error 500"))
-          })
-        };
-    
-        // No need to create billsController here
+        // Directly render the error message
         document.body.innerHTML = BillsUI({ error: "Error 500" });
     
         const errorMessage = screen.getByTestId("error-message");
