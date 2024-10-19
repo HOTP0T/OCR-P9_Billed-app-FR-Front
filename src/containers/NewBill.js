@@ -1,42 +1,46 @@
+// src/containers/NewBill.js
+
 import { ROUTES_PATH } from "../constants/routes.js";
 import Logout from "./Logout.js";
 
 export default class NewBill {
-  //class NewBill qui gère la création d'une nouvelle facture
-  // paramètres : doc HTML, onNavigate navigation entre les pages, store qui stocke les données de l'utilisateur, localStorage qui stocke les données localement
+  // Class NewBill manages the creation of a new bill
   constructor({ document, onNavigate, store, localStorage }) {
     this.document = document;
     this.onNavigate = onNavigate;
     this.store = store;
+    this.localStorage = localStorage; // Store localStorage as this.localStorage
+
     const formNewBill = this.document.querySelector(
-      `form[data-testid="form-new-bill"]` //formulaire de création de facture
-      // on lui ajoute un event listener pour qu'il appelle la fonction handleSubmit lors de la soumission du formulaire
+      `form[data-testid="form-new-bill"]` // Form for creating a new bill
     );
     formNewBill.addEventListener("submit", this.handleSubmit);
-    const file = this.document.querySelector(`input[data-testid="file"]`); //input de type file pour ajouter une image de la facture et on lui ajoute un event listener pour qu'il appelle la fonction handleChangeFile lors du changement de fichier
-    file.addEventListener("change", this.handleChangeFile);
-    // pas de valeur par défaut pour les champs du formulaire au départ
-    // variables qui seront utilisées pour stocker les données du formulaire
+
+    const fileInput = this.document.querySelector(`input[data-testid="file"]`); // Input of type file to add an image of the bill
+    fileInput.addEventListener("change", this.handleChangeFile);
+
+    // Variables that will be used to store form data
     this.fileUrl = null;
     this.fileName = null;
     this.billId = null;
-    new Logout({ document, localStorage, onNavigate }); // on appelle la classe Logout pour pouvoir se déconnecter
+
+    new Logout({ document, localStorage, onNavigate }); // Call the Logout class to be able to log out
   }
-  // fonction qui gére le téléchargement du fichier et l'envoi des données du formulaire au serveur
-  //test 2
+
+  // Function that handles file upload and sending form data to the server
   handleChangeFile = (e) => {
     e.preventDefault();
-    const file = this.document.querySelector(`input[data-testid="file"]`)
-      .files[0]; // on récupère le fichier 0 (le premier) qui a été ajouté
+    const fileInput = this.document.querySelector(`input[data-testid="file"]`);
+    const file = fileInput.files[0]; // Get the first file that was added
 
-    const filePath = e.target.value.split(/\\/g); // on récupère le chemin du fichier avec e.target.value, split permet de découper le chemin en string
-    const fileName = filePath[filePath.length - 1]; // permet de récupérer le dernier élément du tableau filePath, qui correspond au nom du fichier avec son extension.
-    const formData = new FormData(); // ajoute le fichier
-    const email = JSON.parse(localStorage.getItem("user")).email; //ajoute le mail
-    formData.append("file", file); // ajoute le fichier file au formulaire formData
-    formData.append("email", email); // idem mail
+    const fileName = file.name; // Get the file name from the file object
+    const formData = new FormData(); // Create a new FormData object
+    const email = JSON.parse(this.localStorage.getItem("user")).email; // Use this.localStorage
 
-    //bug fichier : accepter uniquement les fichiers jpg, jpeg et png
+    formData.append("file", file); // Append the file to formData
+    formData.append("email", email); // Append the email to formData
+
+    // Only accept files with jpg, jpeg, and png extensions
     if (
       !(
         file.type === "image/jpeg" ||
@@ -44,45 +48,39 @@ export default class NewBill {
         file.type === "image/jpg"
       )
     ) {
-      alert(
-        "Veuillez choisir un fichier ayant une extension jpg, jpeg ou png."
-      );
-      // empeche l'envoi du formulaire si le fichier n'est pas au bon format
-      e.target.value = "";
-      return false;
+      alert("Veuillez choisir un fichier ayant une extension jpg, jpeg ou png.");
+      // Clear the file input if the file is not in the correct format
+      fileInput.value = "";
+      return;
     }
-    //FIN bug fichier
-    // on envoie le fichier au serveur
-    //TEST 3 : vérifie que le fichier est bien envoyé au serveur à faire
-    this.store
-      // on appelle la fonction bills du store pour créer une nouvelle facture
-      .bills()
-      // on appelle la fonction create du store pour créer une nouvelle facture
-      .create({
-        data: formData,
-        headers: {
-          noContentType: true,
-        },
-      }) // on récupère l'url du fichier et la clé de la facture
-      .then(({ fileUrl, key }) => {
-        console.log(fileUrl); // on affiche l'url du fichier dans la console
-        this.billId = key; // on stocke la clé de la facture
-        this.fileUrl = fileUrl; // on stocke l'url du fichier
-        this.fileName = fileName; // on stocke le nom du fichier
-      })
-      .catch((error) => console.error(error)); // si erreur, on affiche l'erreur dans la console
+
+    // Send the file to the server
+    if (this.store) {
+      this.store
+        .bills()
+        .create({
+          data: formData,
+          headers: {
+            noContentType: true,
+          },
+        })
+        .then(({ fileUrl, key }) => {
+          // Store the file URL and name
+          this.billId = key;
+          this.fileUrl = fileUrl;
+          this.fileName = fileName;
+        })
+        .catch((error) => console.error(error));
+    }
   };
 
-  //TEST 1 : vérifie que le formulaire est bien soumis
-  //fonction appelée lors de la soumission du formulaire
+  // Function called when submitting the form
   handleSubmit = (e) => {
-    e.preventDefault(); // empeche le "rafraichissement" de la page lors de la soumission du formulaire
-    console.log(
-      'e.target.querySelector(`input[data-testid="datepicker"]`).value',
-      e.target.querySelector(`input[data-testid="datepicker"]`).value
-    );
-    const email = JSON.parse(localStorage.getItem("user")).email;
-    //récup mail, et bill contient toutes les données ci dessous
+    e.preventDefault(); // Prevent the page from refreshing on form submission
+
+    const email = JSON.parse(this.localStorage.getItem("user")).email; // Use this.localStorage
+
+    // Retrieve form data
     const bill = {
       email,
       type: e.target.querySelector(`select[data-testid="expense-type"]`).value,
@@ -93,20 +91,21 @@ export default class NewBill {
       date: e.target.querySelector(`input[data-testid="datepicker"]`).value,
       vat: e.target.querySelector(`input[data-testid="vat"]`).value,
       pct:
-        parseInt(e.target.querySelector(`input[data-testid="pct"]`).value) ||
-        20,
-      commentary: e.target.querySelector(`textarea[data-testid="commentary"]`)
-        .value,
+        parseInt(e.target.querySelector(`input[data-testid="pct"]`).value) || 20,
+      commentary: e.target.querySelector(
+        `textarea[data-testid="commentary"]`
+      ).value,
       fileUrl: this.fileUrl,
       fileName: this.fileName,
       status: "pending",
     };
-    this.updateBill(bill); // bill en parametres pour mettre à jour la facture
-    this.onNavigate(ROUTES_PATH["Bills"]); // on se redirige vers la page des bills
+
+    this.updateBill(bill); // Pass bill as parameter to update the bill
+    this.onNavigate(ROUTES_PATH["Bills"]); // Navigate to the Bills page
   };
 
-  // not need to cover this function by tests
-  /*istanbul ignore next*/
+  // Not need to cover this function by tests
+  /* istanbul ignore next */
   updateBill = (bill) => {
     if (this.store) {
       this.store
