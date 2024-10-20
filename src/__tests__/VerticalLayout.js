@@ -21,3 +21,19 @@ describe('Given I am connected as Employee', () => {
   })
 
 })
+
+//Added admin test
+describe('Given I am connected as Admin', () => {
+  test("Then Icons should be rendered", () => {
+    Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+    const user = JSON.stringify({
+      type: 'Admin'
+    })
+    window.localStorage.setItem('user', user)
+    const html = VerticalLayout(120)
+    document.body.innerHTML = html
+    expect(screen.getByTestId('icon-window')).toBeTruthy()
+    expect(screen.getByTestId('icon-mail')).toBeTruthy()
+  })
+
+})
